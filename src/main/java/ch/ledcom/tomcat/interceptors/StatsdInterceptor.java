@@ -46,15 +46,31 @@ public class StatsdInterceptor extends JdbcInterceptor {
     private double sampleRate;
     private String prefix;
 
+    /**
+     * This interceptor has no state to be reset, so this method does nothing.
+     * 
+     * @see JdbcInterceptor#reset(ConnectionPool, PooledConnection)
+     */
     @Override
-    public void reset(ConnectionPool arg0, PooledConnection arg1) {
+    public void reset(final ConnectionPool parent, final PooledConnection conn) {
         // do nothing on reset, this interceptor has no state except
         // configuration
     }
 
+    /**
+     * Configure the interceptor.
+     * 
+     * The following options are all required :
+     * <ul>
+     * <li>hostname: the hostname of the Statsd server</li>
+     * <li>port: the port of the Statsd server</li>
+     * <li>sampleRate: the fraction of connections that will be measured</li>
+     * <li>prefix: this prefix will be added to the keys published to Statsd</li>
+     * </ul>
+     */
     @Override
     public synchronized void setProperties(
-            Map<String, PoolProperties.InterceptorProperty> properties) {
+            final Map<String, PoolProperties.InterceptorProperty> properties) {
         super.setProperties(properties);
         InterceptorProperty hostnameProp = properties.get("hostname");
         if (hostnameProp == null) {
@@ -89,53 +105,52 @@ public class StatsdInterceptor extends JdbcInterceptor {
         }
     }
 
+    /**
+     * Gets invoked each time an operation on {@link java.sql.Connection} is
+     * invoked.
+     * 
+     * The timing and count of each method calls to {@link java.sql.Connection}
+     * are sent to Statsd.
+     */
     @Override
-    public Object invoke(Object proxy, Method method, Object[] args)
-            throws Throwable {
+    public Object invoke(final Object proxy, final Method method,
+            final Object[] args) throws Throwable {
         String methodName = method.getName();
         long start = System.nanoTime();
         Object result = super.invoke(proxy, method, args);
 
-        increment(methodName);
-        timing(methodName, System.nanoTime() - start);
+        increment(methodName + ".count");
+        timing(methodName + ".timing", System.nanoTime() - start);
         return result;
     }
 
-    private boolean increment(String key) {
-        String stat = String.format(Locale.ENGLISH, "%s:1|c", prefix + key);
-        return send(sampleRate, stat);
+    private boolean increment(final String key) {
+        return send(sampleRate,
+                String.format(Locale.ENGLISH, "%s:1|c", prefix + key));
     }
 
-    private boolean timing(String key, long value) {
+    private boolean timing(final String key, final long value) {
         return send(sampleRate,
                 String.format(Locale.ENGLISH, "%s:%d|ms", prefix + key, value));
     }
 
-    private boolean send(double sampleRate, String... stats) {
+    private boolean send(final double sampleRate, String stat) {
 
         boolean retval = false; // didn't send anything
         if (sampleRate < 1.0) {
-            for (String stat : stats) {
-                if (RNG.nextDouble() <= sampleRate) {
-                    stat = String.format(Locale.ENGLISH, "%s|@%f", stat,
-                            sampleRate);
-                    if (doSend(stat)) {
-                        retval = true;
-                    }
-                }
+            if (RNG.nextDouble() <= sampleRate) {
+                stat = String
+                        .format(Locale.ENGLISH, "%s|@%f", stat, sampleRate);
             }
-        } else {
-            for (String stat : stats) {
-                if (doSend(stat)) {
-                    retval = true;
-                }
-            }
+        }
+        if (doSend(stat)) {
+            retval = true;
         }
 
         return retval;
     }
 
-    private synchronized boolean doSend(String stat) {
+    private synchronized boolean doSend(final String stat) {
         try {
             final byte[] data = stat.getBytes("utf-8");
 
