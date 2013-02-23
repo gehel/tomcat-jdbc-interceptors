@@ -53,7 +53,7 @@ public class StatsdInterceptor extends JdbcInterceptor {
     }
 
     @Override
-    public void setProperties(
+    public synchronized void setProperties(
             Map<String, PoolProperties.InterceptorProperty> properties) {
         super.setProperties(properties);
         InterceptorProperty hostnameProp = properties.get("hostname");
@@ -165,7 +165,7 @@ public class StatsdInterceptor extends JdbcInterceptor {
         }
     }
 
-    public synchronized boolean flush() {
+    private synchronized boolean flush() {
         try {
             final int sizeOfBuffer = sendBuffer.position();
 
