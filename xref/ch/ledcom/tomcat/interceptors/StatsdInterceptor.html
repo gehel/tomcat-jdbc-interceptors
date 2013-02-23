@@ -63,7 +63,7 @@
 <a class="jxr_linenumber" name="53" href="#53">53</a>      }
 <a class="jxr_linenumber" name="54" href="#54">54</a>  
 <a class="jxr_linenumber" name="55" href="#55">55</a>      @Override
-<a class="jxr_linenumber" name="56" href="#56">56</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> setProperties(
+<a class="jxr_linenumber" name="56" href="#56">56</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">synchronized</strong> <strong class="jxr_keyword">void</strong> setProperties(
 <a class="jxr_linenumber" name="57" href="#57">57</a>              Map&lt;String, PoolProperties.InterceptorProperty&gt; properties) {
 <a class="jxr_linenumber" name="58" href="#58">58</a>          <strong class="jxr_keyword">super</strong>.setProperties(properties);
 <a class="jxr_linenumber" name="59" href="#59">59</a>          InterceptorProperty hostnameProp = properties.get(<span class="jxr_string">"hostname"</span>);
@@ -175,7 +175,7 @@
 <a class="jxr_linenumber" name="165" href="#165">165</a>         }
 <a class="jxr_linenumber" name="166" href="#166">166</a>     }
 <a class="jxr_linenumber" name="167" href="#167">167</a> 
-<a class="jxr_linenumber" name="168" href="#168">168</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">synchronized</strong> <strong class="jxr_keyword">boolean</strong> flush() {
+<a class="jxr_linenumber" name="168" href="#168">168</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">synchronized</strong> <strong class="jxr_keyword">boolean</strong> flush() {
 <a class="jxr_linenumber" name="169" href="#169">169</a>         <strong class="jxr_keyword">try</strong> {
 <a class="jxr_linenumber" name="170" href="#170">170</a>             <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> sizeOfBuffer = sendBuffer.position();
 <a class="jxr_linenumber" name="171" href="#171">171</a> 
