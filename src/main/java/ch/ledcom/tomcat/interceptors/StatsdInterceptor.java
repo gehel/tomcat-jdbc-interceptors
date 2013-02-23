@@ -27,6 +27,7 @@ import java.util.logging.Logger;
 import org.apache.tomcat.jdbc.pool.ConnectionPool;
 import org.apache.tomcat.jdbc.pool.JdbcInterceptor;
 import org.apache.tomcat.jdbc.pool.PoolProperties;
+import org.apache.tomcat.jdbc.pool.PoolProperties.InterceptorProperty;
 import org.apache.tomcat.jdbc.pool.PooledConnection;
 
 public class StatsdInterceptor extends JdbcInterceptor {
@@ -43,6 +44,7 @@ public class StatsdInterceptor extends JdbcInterceptor {
     private InetSocketAddress address;
     private DatagramChannel channel;
     private double sampleRate;
+    private String prefix;
 
     @Override
     public void reset(ConnectionPool arg0, PooledConnection arg1) {
@@ -53,8 +55,32 @@ public class StatsdInterceptor extends JdbcInterceptor {
     @Override
     public void setProperties(
             Map<String, PoolProperties.InterceptorProperty> properties) {
-        String hostname = null;
-        int port = 0;
+        super.setProperties(properties);
+        InterceptorProperty hostnameProp = properties.get("hostname");
+        if (hostnameProp == null) {
+            throw new IllegalArgumentException(
+                    "property \"hostname\" has not been set");
+        }
+        InterceptorProperty portProp = properties.get("port");
+        if (portProp == null) {
+            throw new IllegalArgumentException(
+                    "property \"port\" has not been set");
+        }
+        InterceptorProperty sampleRateProp = properties.get("sampleRate");
+        if (sampleRateProp == null) {
+            throw new IllegalArgumentException(
+                    "property \"sampleRate\" has not been set");
+        }
+        InterceptorProperty prefixProp = properties.get("prefix");
+        if (prefixProp == null) {
+            throw new IllegalArgumentException(
+                    "property \"prefix\" has not been set");
+        }
+
+        String hostname = hostnameProp.getValue();
+        int port = portProp.getValueAsInt(0);
+        sampleRate = sampleRateProp.getValueAsDouble(1.0);
+        prefix = prefixProp.getValue();
         address = new InetSocketAddress(hostname, port);
         try {
             channel = DatagramChannel.open();
@@ -76,13 +102,13 @@ public class StatsdInterceptor extends JdbcInterceptor {
     }
 
     private boolean increment(String key) {
-        String stat = String.format(Locale.ENGLISH, "%s:1|c", key);
+        String stat = String.format(Locale.ENGLISH, "%s:1|c", prefix + key);
         return send(sampleRate, stat);
     }
 
     private boolean timing(String key, long value) {
         return send(sampleRate,
-                String.format(Locale.ENGLISH, "%s:%d|ms", key, value));
+                String.format(Locale.ENGLISH, "%s:%d|ms", prefix + key, value));
     }
 
     private boolean send(double sampleRate, String... stats) {
