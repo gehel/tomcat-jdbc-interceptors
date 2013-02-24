@@ -38,7 +38,7 @@ public class StatsdInterceptor extends JdbcInterceptor {
 
     private static final Random RNG = new Random();
 
-    private static final Logger log = Logger.getLogger(StatsdInterceptor.class
+    private static final Logger LOG = Logger.getLogger(StatsdInterceptor.class
             .getName());
 
     private InetSocketAddress address;
@@ -50,6 +50,10 @@ public class StatsdInterceptor extends JdbcInterceptor {
      * This interceptor has no state to be reset, so this method does nothing.
      * 
      * @see JdbcInterceptor#reset(ConnectionPool, PooledConnection)
+     * @param parent
+     *            the connection pool owning the connection
+     * @param con
+     *            the pooled connection
      */
     @Override
     public void reset(final ConnectionPool parent, final PooledConnection conn) {
@@ -67,6 +71,8 @@ public class StatsdInterceptor extends JdbcInterceptor {
      * <li>sampleRate: the fraction of connections that will be measured</li>
      * <li>prefix: this prefix will be added to the keys published to Statsd</li>
      * </ul>
+     * 
+     * @param properties
      */
     @Override
     public synchronized void setProperties(
@@ -111,9 +117,11 @@ public class StatsdInterceptor extends JdbcInterceptor {
      * 
      * The timing and count of each method calls to {@link java.sql.Connection}
      * are sent to Statsd.
+     * 
+     * {@inheritDoc}
      */
     @Override
-    public Object invoke(final Object proxy, final Method method,
+    public final Object invoke(final Object proxy, final Method method,
             final Object[] args) throws Throwable {
         String methodName = method.getName();
         long start = System.nanoTime();
@@ -125,16 +133,14 @@ public class StatsdInterceptor extends JdbcInterceptor {
     }
 
     private boolean increment(final String key) {
-        return send(sampleRate,
-                String.format(Locale.ENGLISH, "%s:1|c", prefix + key));
+        return send(String.format(Locale.ENGLISH, "%s:1|c", prefix + key));
     }
 
     private boolean timing(final String key, final long value) {
-        return send(sampleRate,
-                String.format(Locale.ENGLISH, "%s:%d|ms", prefix + key, value));
+        return send(String.format(Locale.ENGLISH, "%s:%d|ms", prefix + key, value));
     }
 
-    private boolean send(final double sampleRate, String stat) {
+    private boolean send(String stat) {
 
         boolean retval = false; // didn't send anything
         if ((sampleRate < 1.0) && (RNG.nextDouble() <= sampleRate)) {
@@ -169,7 +175,7 @@ public class StatsdInterceptor extends JdbcInterceptor {
             return true;
 
         } catch (IOException e) {
-            log.log(Level.WARNING, String.format(
+            LOG.log(Level.WARNING, String.format(
                     "Could not send stat %s to host %s:%d",
                     sendBuffer.toString(), address.getHostName(),
                     address.getPort()), e);
@@ -194,7 +200,7 @@ public class StatsdInterceptor extends JdbcInterceptor {
             if (sizeOfBuffer == nbSentBytes) {
                 return true;
             } else {
-                log.log(Level.WARNING,
+                LOG.log(Level.WARNING,
                         String.format(
                                 "Could not send entirely stat %s to host %s:%d. Only sent %d bytes out of %d bytes",
                                 sendBuffer.toString(), address.getHostName(),
@@ -203,7 +209,7 @@ public class StatsdInterceptor extends JdbcInterceptor {
             }
 
         } catch (IOException e) {
-            log.log(Level.WARNING, String.format(
+            LOG.log(Level.WARNING, String.format(
                     "Could not send stat %s to host %s:%d",
                     sendBuffer.toString(), address.getHostName(),
                     address.getPort()), e);

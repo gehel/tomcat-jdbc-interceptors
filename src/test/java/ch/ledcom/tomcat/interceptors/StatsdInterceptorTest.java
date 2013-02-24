@@ -35,6 +35,9 @@ import org.junit.Test;
 
 public class StatsdInterceptorTest {
 
+    private static final int TIME_TO_WAIT_FOR_PACKETS = 10 * 1000;
+    private static final int SOCKET_TIMEOUT = 500;
+    private static final int RECEIVE_BUFFER_SIZE = 1024;
     private static final String STATSD_PREFIX = "jdbc.pool.";
     private static final int STATSD_PORT = 6545;
     private DataSource ds;
@@ -67,9 +70,9 @@ public class StatsdInterceptorTest {
                 try {
                     DatagramSocket serverSocket = new DatagramSocket(
                             STATSD_PORT);
-                    serverSocket.setSoTimeout(500);
+                    serverSocket.setSoTimeout(SOCKET_TIMEOUT);
                     while (!Thread.currentThread().isInterrupted()) {
-                        byte[] receiveData = new byte[1024];
+                        byte[] receiveData = new byte[RECEIVE_BUFFER_SIZE];
                         DatagramPacket receivePacket = new DatagramPacket(
                                 receiveData, receiveData.length);
                         try {
@@ -109,7 +112,7 @@ public class StatsdInterceptorTest {
             throw statsdExceptions.get(0);
         }
 
-        assertTrue("Exception where thrown by mock Statsd",
+        assertTrue("Exception where thrown by mock Statsd.",
                 statsdExceptions.size() == 0);
         assertTrue("No packet was received by mock Statsd.",
                 receivedMessages.size() > 0);
@@ -131,7 +134,7 @@ public class StatsdInterceptorTest {
     private void waitForFirstPacket() throws InterruptedException {
         if (receivedMessages.size() == 0) {
             synchronized (packetReceived) {
-                packetReceived.wait(1000);
+                packetReceived.wait(TIME_TO_WAIT_FOR_PACKETS);
             }
         }
     }
