@@ -118,9 +118,9 @@ public class StatsdInterceptorTest {
     }
 
     private void waitForFirstPacket() throws InterruptedException {
-        while (receivedMessages.size() == 0) {
+        if (receivedMessages.size() == 0) {
             synchronized (packetReceived) {
-                packetReceived.wait();
+                packetReceived.wait(1000);
             }
         }
     }
