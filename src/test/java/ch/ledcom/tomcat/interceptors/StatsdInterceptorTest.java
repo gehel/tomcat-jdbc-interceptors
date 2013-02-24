@@ -13,13 +13,12 @@
  */
 package ch.ledcom.tomcat.interceptors;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -40,6 +39,7 @@ public class StatsdInterceptorTest {
     private DataSource ds;
     private Thread statsdThread;
     private List<String> receivedMessages = new CopyOnWriteArrayList<String>();
+    private List<IOException> statsdExceptions = new CopyOnWriteArrayList<IOException>();
 
     private final Object packetReceived = new Object();
 
@@ -80,11 +80,8 @@ public class StatsdInterceptorTest {
                             packetReceived.notifyAll();
                         }
                     }
-                } catch (SocketTimeoutException expected) {
-                } catch (SocketException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
+                } catch (IOException ioe) {
+                    statsdExceptions.add(ioe);
                 }
             }
         });
@@ -93,7 +90,7 @@ public class StatsdInterceptorTest {
 
     @Test
     public void interceptorSendsPacketsToStatsd() throws SQLException,
-            InterruptedException {
+            InterruptedException, IOException {
         Connection conn = ds.getConnection();
         Statement stmt = conn.createStatement();
         stmt.execute("Create table toto (a Integer)");
@@ -102,6 +99,15 @@ public class StatsdInterceptorTest {
 
         // give time to the packet to be received
         waitForFirstPacket();
+
+        if (statsdExceptions.size() > 0) {
+            throw statsdExceptions.get(0);
+        }
+        
+        assertTrue("Exception where thrown by mock Statsd",
+                statsdExceptions.size() == 0);
+        assertTrue("No packet was received by mock Statsd.",
+                receivedMessages.size() > 0);
         assertEquals("jdbc.pool.createStatement.count:1|c",
                 receivedMessages.get(0));
     }
