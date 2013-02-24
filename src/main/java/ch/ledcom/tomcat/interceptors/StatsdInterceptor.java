@@ -137,11 +137,8 @@ public class StatsdInterceptor extends JdbcInterceptor {
     private boolean send(final double sampleRate, String stat) {
 
         boolean retval = false; // didn't send anything
-        if (sampleRate < 1.0) {
-            if (RNG.nextDouble() <= sampleRate) {
-                stat = String
-                        .format(Locale.ENGLISH, "%s|@%f", stat, sampleRate);
-            }
+        if ((sampleRate < 1.0) && (RNG.nextDouble() <= sampleRate)) {
+            stat = String.format(Locale.ENGLISH, "%s|@%f", stat, sampleRate);
         }
         if (doSend(stat)) {
             retval = true;

@@ -19,6 +19,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.SocketTimeoutException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -71,7 +72,11 @@ public class StatsdInterceptorTest {
                         byte[] receiveData = new byte[1024];
                         DatagramPacket receivePacket = new DatagramPacket(
                                 receiveData, receiveData.length);
-                        serverSocket.receive(receivePacket);
+                        try {
+                            serverSocket.receive(receivePacket);
+                        } catch (SocketTimeoutException expected) {
+                            continue;
+                        }
                         String message = new String(receivePacket.getData(), 0,
                                 receivePacket.getLength());
                         System.out.println(message);
@@ -103,7 +108,7 @@ public class StatsdInterceptorTest {
         if (statsdExceptions.size() > 0) {
             throw statsdExceptions.get(0);
         }
-        
+
         assertTrue("Exception where thrown by mock Statsd",
                 statsdExceptions.size() == 0);
         assertTrue("No packet was received by mock Statsd.",
