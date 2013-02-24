@@ -1,8 +1,3 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<pmd version="4.3" timestamp="2013-02-24T01:40:39.767">
-<file name="/scratch/jenkins/workspace/tomcat-jdbc-interceptors/src/main/java/ch/ledcom/tomcat/interceptors/StatsdInterceptor.java">
-<violation beginline="141" endline="144" begincolumn="13" endcolumn="13" rule="CollapsibleIfStatements" ruleset="Basic Rules" package="ch.ledcom.tomcat.interceptors" class="StatsdInterceptor" method="send" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#CollapsibleIfStatements" priority="3">
-These nested if statements could be combined
-</violation>
-</file>
+<pmd version="4.3" timestamp="2013-02-24T01:45:40.372">
 </pmd>
