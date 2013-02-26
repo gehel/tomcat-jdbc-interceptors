@@ -35,10 +35,11 @@ import org.junit.Test;
 
 public class StatsdInterceptorTest {
 
+    private static final int EXPECTED_NUMBER_OF_PACKETS = 8;
     private static final int TIME_TO_WAIT_FOR_PACKETS = 10 * 1000;
     private static final int SOCKET_TIMEOUT = 500;
     private static final int RECEIVE_BUFFER_SIZE = 1024;
-    private static final String STATSD_PREFIX = "jdbc.pool.";
+    private static final String STATSD_PREFIX = "jdbc.pool";
     private static final int STATSD_PORT = 6545;
     private DataSource ds;
     private Thread statsdThread;
@@ -106,7 +107,7 @@ public class StatsdInterceptorTest {
         conn.close();
 
         // give time to the packet to be received
-        waitForFirstPacket();
+        waitForPackets(EXPECTED_NUMBER_OF_PACKETS, TIME_TO_WAIT_FOR_PACKETS);
 
         if (statsdExceptions.size() > 0) {
             throw statsdExceptions.get(0);
@@ -114,10 +115,12 @@ public class StatsdInterceptorTest {
 
         assertTrue("Exception where thrown by mock Statsd.",
                 statsdExceptions.size() == 0);
-        assertTrue("No packet was received by mock Statsd.",
-                receivedMessages.size() > 0);
-        assertEquals("jdbc.pool.createStatement.count:1|c",
+        assertEquals("Not enough packets were received by mock Statsd.",
+                EXPECTED_NUMBER_OF_PACKETS, receivedMessages.size());
+        assertEquals("jdbc.pool.connection.createStatement.count:1|c",
                 receivedMessages.get(0));
+        assertEquals("jdbc.pool.statement.execute.count:1|c",
+                receivedMessages.get(2));
     }
 
     @After
@@ -131,10 +134,15 @@ public class StatsdInterceptorTest {
         statsdThread.join();
     }
 
-    private void waitForFirstPacket() throws InterruptedException {
-        if (receivedMessages.size() == 0) {
+    private void waitForPackets(int numberOfPackets, long timeoutInMillis)
+            throws InterruptedException {
+        long start = System.currentTimeMillis();
+        while (receivedMessages.size() < numberOfPackets) {
             synchronized (packetReceived) {
-                packetReceived.wait(TIME_TO_WAIT_FOR_PACKETS);
+                packetReceived.wait(timeoutInMillis);
+            }
+            if (System.currentTimeMillis() - start > timeoutInMillis) {
+                return;
             }
         }
     }
