@@ -18,7 +18,6 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.util.Locale;
-import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -26,14 +25,13 @@ public class Metrics {
     private static final Logger LOG = Logger.getLogger(Metrics.class.getName());
 
     private static final int BUFFER_SIZE = 1500;
-    private static final Random RNG = new Random();
 
     private final ByteBuffer sendBuffer;
 
     private final InetSocketAddress address;
     private final DatagramChannel channel;
-    private final double sampleRate;
     private final String prefix;
+    private final double sampleRate;
 
     public Metrics(String hostname, int port, String prefix, double sampleRate) {
         address = new InetSocketAddress(hostname, port);
@@ -42,27 +40,19 @@ public class Metrics {
         } catch (IOException ioe) {
             throw new RuntimeException(ioe);
         }
-        this.sampleRate = sampleRate;
         this.prefix = prefix;
         sendBuffer = ByteBuffer.allocate(BUFFER_SIZE);
+        this.sampleRate = sampleRate;
     }
 
     public boolean increment(final String key) {
-        return send(String.format(Locale.ENGLISH, "%s:1|c", prefix + key));
+        return doSend(String.format(Locale.ENGLISH, "%s:1|c|@%f", prefix + key,
+                sampleRate));
     }
 
     public boolean timing(final String key, final long value) {
-        return send(String.format(Locale.ENGLISH, "%s:%d|ms", prefix + key,
-                value));
-    }
-
-    private boolean send(String stat) {
-        if ((sampleRate < 1.0) && (RNG.nextDouble() <= sampleRate)) {
-            return doSend(String.format(Locale.ENGLISH, "%s|@%f", stat,
-                    sampleRate));
-        } else {
-            return doSend(stat);
-        }
+        return doSend(String.format(Locale.ENGLISH, "%s:%d|ms|@%f", prefix
+                + key, value, sampleRate));
     }
 
     private synchronized boolean doSend(final String stat) {

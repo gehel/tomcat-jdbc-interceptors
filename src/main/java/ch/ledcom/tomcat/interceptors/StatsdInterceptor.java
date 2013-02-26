@@ -19,6 +19,7 @@ import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.Map;
+import java.util.Random;
 
 import org.apache.tomcat.jdbc.pool.ConnectionPool;
 import org.apache.tomcat.jdbc.pool.JdbcInterceptor;
@@ -28,9 +29,11 @@ import org.apache.tomcat.jdbc.pool.PooledConnection;
 
 public class StatsdInterceptor extends JdbcInterceptor {
 
+    private static final Random RNG = new Random();
     private Metrics metrics;
 
     private ProxyFactory proxyFactory;
+    private double sampleRate;
 
     /**
      * This interceptor has no state to be reset, so this method does nothing.
@@ -85,9 +88,9 @@ public class StatsdInterceptor extends JdbcInterceptor {
                     "property \"prefix\" has not been set");
         }
 
+        sampleRate = sampleRateProp.getValueAsDouble(1.0);
         metrics = new Metrics(hostnameProp.getValue(),
-                portProp.getValueAsInt(0), prefixProp.getValue(),
-                sampleRateProp.getValueAsDouble(1.0));
+                portProp.getValueAsInt(0), prefixProp.getValue(), sampleRate);
         proxyFactory = new ProxyFactory(metrics);
     }
 
@@ -104,10 +107,16 @@ public class StatsdInterceptor extends JdbcInterceptor {
     public final Object invoke(final Object proxy, final Method method,
             final Object[] args) throws Throwable {
         String methodName = method.getName();
-        long start = System.nanoTime();
+        boolean sample = sample();
+        long start = 0;
+        if (sample) {
+            start = System.nanoTime();
+        }
         try {
             Object o = super.invoke(proxy, method, args);
-            if ("createStatement".equals(methodName)) {
+            if (!sample) {
+                // if this call is not sampled, no need to proxy the statements
+            } else if ("createStatement".equals(methodName)) {
                 o = proxyFactory.statementProxy((Statement) o);
             } else if ("prepareStatement".equals(method.getName())) {
                 o = proxyFactory.preparedStatementProxy((PreparedStatement) o);
@@ -118,10 +127,16 @@ public class StatsdInterceptor extends JdbcInterceptor {
         } catch (InvocationTargetException e) {
             throw e.getCause();
         } finally {
-            metrics.increment(".connection." + methodName + ".count");
-            metrics.timing(".connection." + methodName + ".timing",
-                    System.nanoTime() - start);
+            if (sample) {
+                metrics.increment(".connection." + methodName + ".count");
+                metrics.timing(".connection." + methodName + ".timing",
+                        System.nanoTime() - start);
+            }
         }
+    }
+
+    private boolean sample() {
+        return RNG.nextDouble() <= sampleRate;
     }
 
 }

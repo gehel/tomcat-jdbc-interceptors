@@ -117,9 +117,9 @@ public class StatsdInterceptorTest {
                 statsdExceptions.size() == 0);
         assertEquals("Not enough packets were received by mock Statsd.",
                 EXPECTED_NUMBER_OF_PACKETS, receivedMessages.size());
-        assertEquals("jdbc.pool.connection.createStatement.count:1|c",
+        assertEquals("jdbc.pool.connection.createStatement.count:1|c|@1.000000",
                 receivedMessages.get(0));
-        assertEquals("jdbc.pool.statement.execute.count:1|c",
+        assertEquals("jdbc.pool.statement.execute.count:1|c|@1.000000",
                 receivedMessages.get(2));
     }
 
