@@ -9,7 +9,7 @@
     <copyright>&#169;2013 LedCom</copyright>
     <item>
       <title>File: 4,
-             Errors: 72,
+             Errors: 73,
              Warnings: 0,
              Infos: 0
       </title>
@@ -38,7 +38,7 @@
                   0
                 </td>
                 <td>
-                  14
+                  13
                 </td>
               </tr>
                           <tr>
@@ -52,7 +52,7 @@
                   0
                 </td>
                 <td>
-                  14
+                  19
                 </td>
               </tr>
                           <tr>
@@ -80,7 +80,7 @@
                   0
                 </td>
                 <td>
-                  26
+                  23
                 </td>
               </tr>
                       </tbody>
