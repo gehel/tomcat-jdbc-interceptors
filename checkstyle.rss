@@ -8,8 +8,8 @@
     <language>en-us</language>
     <copyright>&#169;2013 LedCom</copyright>
     <item>
-      <title>File: 1,
-             Errors: 29,
+      <title>File: 4,
+             Errors: 72,
              Warnings: 0,
              Infos: 0
       </title>
@@ -29,6 +29,20 @@
           <tbody>
                           <tr>
                 <td>
+                  <a href="http://gehel.github.com/tomcat-jdbc-interceptors//checkstyle.html#ch.ledcom.tomcat.interceptors.StatementInvocationHandler.java">ch/ledcom/tomcat/interceptors/StatementInvocationHandler.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  14
+                </td>
+              </tr>
+                          <tr>
+                <td>
                   <a href="http://gehel.github.com/tomcat-jdbc-interceptors//checkstyle.html#ch.ledcom.tomcat.interceptors.StatsdInterceptor.java">ch/ledcom/tomcat/interceptors/StatsdInterceptor.java</a>
                 </td>
                 <td>
@@ -38,7 +52,35 @@
                   0
                 </td>
                 <td>
-                  29
+                  14
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="http://gehel.github.com/tomcat-jdbc-interceptors//checkstyle.html#ch.ledcom.tomcat.interceptors.ProxyFactory.java">ch/ledcom/tomcat/interceptors/ProxyFactory.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  18
+                </td>
+              </tr>
+                          <tr>
+                <td>
+                  <a href="http://gehel.github.com/tomcat-jdbc-interceptors//checkstyle.html#ch.ledcom.tomcat.interceptors.Metrics.java">ch/ledcom/tomcat/interceptors/Metrics.java</a>
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  0
+                </td>
+                <td>
+                  26
                 </td>
               </tr>
                       </tbody>
