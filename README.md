@@ -23,4 +23,4 @@ The interceptor can be configured as follow:
           url="jdbc:mysql://localhost:3306/mysql"/>
 ```
 
-Of course, you will need to add the jar to the Tomcat lib directory. The jar containing this interceptor can be downloaded from [Maven Repo1](http://repo1.maven.org/maven2/ch/ledcom/tomcat/interceptors/).
+Of course, you will need to add the jar to the Tomcat lib directory. The jar containing this interceptor can be downloaded from [Maven Repo1](http://repo1.maven.org/maven2/ch/ledcom/tomcat/interceptors/tomcat-jdbc-interceptors/).
