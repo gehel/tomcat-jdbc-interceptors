@@ -128,7 +128,6 @@ public class StatsdInterceptor extends JdbcInterceptor {
             throw e.getCause();
         } finally {
             if (sample) {
-                metrics.increment(".connection." + methodName + ".count");
                 metrics.timing(".connection." + methodName + ".timing",
                         System.nanoTime() - start);
             }

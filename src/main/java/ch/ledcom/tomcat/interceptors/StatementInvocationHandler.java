@@ -39,7 +39,6 @@ public class StatementInvocationHandler implements InvocationHandler {
         } catch (InvocationTargetException e) {
             throw e.getCause();
         } finally {
-            metrics.increment(".statement." + methodName + ".count");
             metrics.timing(".statement." + methodName + ".timing",
                     System.nanoTime() - start);
         }
