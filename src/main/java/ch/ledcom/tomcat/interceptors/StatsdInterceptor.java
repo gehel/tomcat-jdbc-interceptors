@@ -30,47 +30,60 @@ import org.apache.tomcat.jdbc.pool.PoolProperties;
 import org.apache.tomcat.jdbc.pool.PoolProperties.InterceptorProperty;
 import org.apache.tomcat.jdbc.pool.PooledConnection;
 
+/**
+ * {@link JdbcInterceptor} reporting timing of certain method calls to a Statsd
+ * server.
+ *
+ * @author gehel
+ */
 public class StatsdInterceptor extends JdbcInterceptor {
 
+    /** Random number generator used to decide if we sample a specific call. */
     private static final Random RNG = new Random();
+    /** Only report metrics for those methods. */
     private static final Set<String> METHODS_TO_REPORT = new HashSet<String>(
             Arrays.asList("commit", "createStatement", "getMetadata",
                     "prepareCall", "prepareStatement", "rollback"));
+    /** {@link Metrics} used for reporting. */
     private Metrics metrics;
 
+    /** Factory to create {@link Statement} proxy. */
     private ProxyFactory proxyFactory;
+    /** Ratio of calls to be sampled. */
     private double sampleRate;
 
     /**
      * This interceptor has no state to be reset, so this method does nothing.
-     * 
+     *
      * @see JdbcInterceptor#reset(ConnectionPool, PooledConnection)
      * @param parent
      *            the connection pool owning the connection
-     * @param con
+     * @param conn
      *            the pooled connection
      */
     @Override
-    public void reset(final ConnectionPool parent, final PooledConnection conn) {
+    public void reset(final ConnectionPool parent,
+            final PooledConnection conn) {
         // do nothing on reset, this interceptor has no state except
         // configuration
     }
 
     /**
      * Configure the interceptor.
-     * 
+     *
      * The following options are all required :
      * <ul>
      * <li>hostname: the hostname of the Statsd server</li>
      * <li>port: the port of the Statsd server</li>
      * <li>sampleRate: the fraction of connections that will be measured</li>
-     * <li>prefix: this prefix will be added to the keys published to Statsd</li>
+     * <li>prefix: this prefix will be added to the keys published to
+     * Statsd</li>
      * </ul>
-     * 
-     * @param properties
+     *
+     * @param properties configuration for the interceptor
      */
     @Override
-    public synchronized void setProperties(
+    public final synchronized void setProperties(
             final Map<String, PoolProperties.InterceptorProperty> properties) {
         super.setProperties(properties);
         InterceptorProperty hostnameProp = properties.get("hostname");
@@ -103,10 +116,10 @@ public class StatsdInterceptor extends JdbcInterceptor {
     /**
      * Gets invoked each time an operation on {@link java.sql.Connection} is
      * invoked.
-     * 
+     *
      * The timing and count of each method calls to {@link java.sql.Connection}
      * are sent to Statsd.
-     * 
+     *
      * {@inheritDoc}
      */
     @Override
@@ -140,10 +153,26 @@ public class StatsdInterceptor extends JdbcInterceptor {
         }
     }
 
-    private boolean shouldReport(String methodName) {
+    /**
+     * Decide if we should report metrics for a specific method or not.
+     *
+     * @param methodName
+     *            name of the method
+     * @return <code>true</code> if we should report metrics
+     */
+    private boolean shouldReport(final String methodName) {
         return METHODS_TO_REPORT.contains(methodName);
     }
 
+    /**
+     * Check if we should sample a specific method call.
+     *
+     * As we don't want to impact performances too much, we only sample a given
+     * ratio of calls. Based on the <code>sampleRate</code> property, we decide
+     * if we wnat to sample this call.
+     *
+     * @return <code>true</code> if we should sample this call
+     */
     private boolean sample() {
         return RNG.nextDouble() <= sampleRate;
     }

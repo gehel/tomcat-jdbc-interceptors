@@ -21,19 +21,44 @@ import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Reports metrics to a Statsd server.
+ *
+ * @author gehel
+ */
 public class Metrics {
+    /** Standard logger. */
     private static final Logger LOG = Logger.getLogger(Metrics.class.getName());
 
+    /** Size of send buffer. */
     private static final int BUFFER_SIZE = 1500;
 
+    /** Buffer used for communication with Statsd. */
     private final ByteBuffer sendBuffer;
 
+    /** Address of the Statsd server. */
     private final InetSocketAddress address;
+    /** UDP channel to the Statsd server. */
     private final DatagramChannel channel;
+    /** Prepended to the key being reported. */
     private final String prefix;
+    /** Ratio of metrics being actually reported. */
     private final double sampleRate;
 
-    public Metrics(String hostname, int port, String prefix, double sampleRate) {
+    /**
+     * Construct a reporter for a specific Statsd server.
+     *
+     * @param hostname
+     *            hostname of the Statsd server
+     * @param port
+     *            port of the Statsd server
+     * @param prefix
+     *            prepended to the key being reported
+     * @param sampleRate
+     *            ratio of metrics being actually reported
+     */
+    public Metrics(final String hostname, final int port, final String prefix,
+            final double sampleRate) {
         address = new InetSocketAddress(hostname, port);
         try {
             channel = DatagramChannel.open();
@@ -45,12 +70,27 @@ public class Metrics {
         this.sampleRate = sampleRate;
     }
 
-    public boolean timing(final String key, final long value) {
-        return doSend(String.format(Locale.ENGLISH, "%s:%d|ms|@%f", prefix
-                + key, value, sampleRate));
+    /**
+     * Report a timing metric to Statsd server.
+     *
+     * @param key
+     *            key under which to report the metric
+     * @param value
+     *            time to report (in nanoseconds, even if Statsd expects
+     *            milliseconds)
+     */
+    public final void timing(final String key, final long value) {
+        doSend(String.format(Locale.ENGLISH, "%s:%d|ms|@%f", prefix + key,
+                value, sampleRate));
     }
 
-    private synchronized boolean doSend(final String stat) {
+    /**
+     * Internal sending of metrics.
+     *
+     * @param stat
+     *            actual {@link String} to send
+     */
+    private synchronized void doSend(final String stat) {
         try {
             final byte[] data = stat.getBytes("utf-8");
 
@@ -68,18 +108,19 @@ public class Metrics {
             sendBuffer.put(data); // append the data
 
             flush();
-
-            return true;
-
         } catch (IOException e) {
             LOG.log(Level.WARNING, String.format(
                     "Could not send stat %s to host %s:%d",
                     sendBuffer.toString(), address.getHostName(),
                     address.getPort()), e);
-            return false;
         }
     }
 
+    /**
+     * Flush send buffer.
+     *
+     * @return if flush actually happens
+     */
     private synchronized boolean flush() {
         try {
             final int sizeOfBuffer = sendBuffer.position();
@@ -97,11 +138,11 @@ public class Metrics {
             if (sizeOfBuffer == nbSentBytes) {
                 return true;
             } else {
-                LOG.log(Level.WARNING,
-                        String.format(
-                                "Could not send entirely stat %s to host %s:%d. Only sent %d bytes out of %d bytes",
-                                sendBuffer.toString(), address.getHostName(),
-                                address.getPort(), nbSentBytes, sizeOfBuffer));
+                LOG.log(Level.WARNING, String.format(
+                        "Could not send entirely stat %s to host "
+                                + "%s:%d. Only sent %d bytes out of %d bytes",
+                        sendBuffer.toString(), address.getHostName(),
+                        address.getPort(), nbSentBytes, sizeOfBuffer));
                 return false;
             }
 

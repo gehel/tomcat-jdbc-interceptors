@@ -137,8 +137,8 @@ public class StatsdInterceptorTest {
         statsdThread.join();
     }
 
-    private void waitForPackets(int numberOfPackets, long timeoutInMillis)
-            throws InterruptedException {
+    private void waitForPackets(final int numberOfPackets,
+            final long timeoutInMillis) throws InterruptedException {
         long start = System.currentTimeMillis();
         while (receivedMessages.size() < numberOfPackets) {
             synchronized (packetReceived) {

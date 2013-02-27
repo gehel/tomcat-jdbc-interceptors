@@ -21,23 +21,46 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * {@link InvocationHandler} specialized in reporting metrics around
+ * {@link Statement} operations.
+ *
+ * @author gehel
+ */
 public class StatementInvocationHandler implements InvocationHandler {
+    /**
+     * This {@link InvocationHandler} only reports metrics on this {@link Set}
+     * of method names.
+     */
     private static final Set<String> METHODS_TO_REPORT = new HashSet<String>(
             Arrays.asList("execute", "executeBatch", "executeQuery",
                     "executeUpdate"));
 
+    /** {@link Statement} being proxied. */
     private final Statement statement;
+    /** {@link Metrics} used for reporting. */
     private final Metrics metrics;
 
-    public StatementInvocationHandler(Statement statement, Metrics metrics) {
+    /**
+     * Creates the {@link InvocationHandler}.
+     *
+     * @param statement
+     *            {@link Statement} being proxied
+     * @param metrics
+     *            {@link Metrics} used for reporting
+     */
+    public StatementInvocationHandler(final Statement statement,
+            final Metrics metrics) {
         this.statement = statement;
         this.metrics = metrics;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public Object invoke(Object proxy, Method method, Object[] args)
-            throws Throwable {
-
+    public final Object invoke(final Object proxy, final Method method,
+            final Object[] args) throws Throwable {
         String methodName = method.getName();
         long start = 0;
         if (shouldReport(methodName)) {
@@ -55,7 +78,14 @@ public class StatementInvocationHandler implements InvocationHandler {
         }
     }
 
-    private boolean shouldReport(String methodName) {
+    /**
+     * Decide if we should report metrics for a specific method or not.
+     *
+     * @param methodName
+     *            name of the method
+     * @return <code>true</code> if we should report metrics
+     */
+    private boolean shouldReport(final String methodName) {
         return METHODS_TO_REPORT.contains(methodName);
     }
 

@@ -19,34 +19,77 @@ import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 
+/**
+ * Creates {@link Proxy}s to {@link Statement}s objects.
+ *
+ * @author gehel
+ */
 public class ProxyFactory {
 
+    /** Used to report Metrics. */
     private final Metrics metrics;
 
-    public ProxyFactory(Metrics metrics) {
+    /**
+     * Creates a proxy factory ready to report metrics to a Statsd server.
+     *
+     * @param metrics
+     *            used to report Metrics
+     */
+    public ProxyFactory(final Metrics metrics) {
         this.metrics = metrics;
     }
 
-    public Statement statementProxy(Statement statement) {
+    /**
+     * Creates a proxy around a {@link Statement}, reporting metrics when
+     * called.
+     *
+     * @param statement the {@link Statement} to proxy
+     * @return a proxied {@link Statement}
+     */
+    public final Statement statementProxy(final Statement statement) {
         return createProxy(Statement.class, new StatementInvocationHandler(
                 statement, metrics));
     }
 
-    public PreparedStatement preparedStatementProxy(
-            PreparedStatement preparedStatement) {
+    /**
+     * Creates a proxy around a {@link PreparedStatement}, reporting metrics
+     * when called.
+     *
+     * @param preparedStatement
+     *            the {@link PreparedStatement} to proxy
+     * @return a proxied {@link PreparedStatement}
+     */
+    public final PreparedStatement preparedStatementProxy(
+            final PreparedStatement preparedStatement) {
         return createProxy(PreparedStatement.class,
                 new StatementInvocationHandler(preparedStatement, metrics));
     }
 
-    public CallableStatement callableStatementProxy(
-            CallableStatement callableStatement) {
+    /**
+     * Creates a proxy around a {@link CallableStatement}, reporting metrics
+     * when called.
+     *
+     * @param callableStatement
+     *            the {@link CallableStatement} to proxy
+     * @return a proxied {@link CallableStatement}
+     */
+    public final CallableStatement callableStatementProxy(
+            final CallableStatement callableStatement) {
         return createProxy(CallableStatement.class,
                 new StatementInvocationHandler(callableStatement, metrics));
     }
 
-    private <T> T createProxy(Class<T> clazz, InvocationHandler handler) {
+    /**
+     * Internal creation of the proxy.
+     * @param clazz Class to proxy
+     * @param handler proxy implementation
+     * @param <T> class being proxied
+     * @return the proxy
+     */
+    private <T> T createProxy(final Class<T> clazz,
+            final InvocationHandler handler) {
         return clazz.cast(Proxy.newProxyInstance(handler.getClass()
-                .getClassLoader(), new Class[] { clazz }, handler));
+                .getClassLoader(), new Class[] {clazz}, handler));
     }
 
 }
