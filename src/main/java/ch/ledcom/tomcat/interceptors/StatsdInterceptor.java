@@ -21,7 +21,6 @@ import java.sql.Statement;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 
 import org.apache.tomcat.jdbc.pool.ConnectionPool;
@@ -38,8 +37,6 @@ import org.apache.tomcat.jdbc.pool.PooledConnection;
  */
 public class StatsdInterceptor extends JdbcInterceptor {
 
-    /** Random number generator used to decide if we sample a specific call. */
-    private static final Random RNG = new Random();
     /** Only report metrics for those methods. */
     private static final Set<String> METHODS_TO_REPORT = new HashSet<String>(
             Arrays.asList("commit", "createStatement", "getMetadata",
@@ -49,8 +46,6 @@ public class StatsdInterceptor extends JdbcInterceptor {
 
     /** Factory to create {@link Statement} proxy. */
     private ProxyFactory proxyFactory;
-    /** Ratio of calls to be sampled. */
-    private double sampleRate;
 
     /**
      * This interceptor has no state to be reset, so this method does nothing.
@@ -83,7 +78,7 @@ public class StatsdInterceptor extends JdbcInterceptor {
      * @param properties configuration for the interceptor
      */
     @Override
-    public final synchronized void setProperties(
+    public final void setProperties(
             final Map<String, PoolProperties.InterceptorProperty> properties) {
         super.setProperties(properties);
         InterceptorProperty hostnameProp = properties.get("hostname");
@@ -107,7 +102,7 @@ public class StatsdInterceptor extends JdbcInterceptor {
                     "property \"prefix\" has not been set");
         }
 
-        sampleRate = sampleRateProp.getValueAsDouble(1.0);
+        double sampleRate = sampleRateProp.getValueAsDouble(1.0);
         metrics = new Metrics(hostnameProp.getValue(),
                 portProp.getValueAsInt(0), prefixProp.getValue(), sampleRate);
         proxyFactory = new ProxyFactory(metrics);
@@ -126,9 +121,10 @@ public class StatsdInterceptor extends JdbcInterceptor {
     public final Object invoke(final Object proxy, final Method method,
             final Object[] args) throws Throwable {
         String methodName = method.getName();
-        boolean sample = sample();
+        boolean sample = metrics.sample();
+        boolean shouldReport = shouldReport(methodName);
         long start = 0;
-        if (sample && shouldReport(methodName)) {
+        if (sample && shouldReport) {
             start = System.nanoTime();
         }
         try {
@@ -146,7 +142,7 @@ public class StatsdInterceptor extends JdbcInterceptor {
         } catch (InvocationTargetException e) {
             throw e.getCause();
         } finally {
-            if (sample && shouldReport(methodName)) {
+            if (sample && shouldReport) {
                 metrics.timing(".connection." + methodName + ".timing",
                         System.nanoTime() - start);
             }
@@ -162,19 +158,6 @@ public class StatsdInterceptor extends JdbcInterceptor {
      */
     private boolean shouldReport(final String methodName) {
         return METHODS_TO_REPORT.contains(methodName);
-    }
-
-    /**
-     * Check if we should sample a specific method call.
-     *
-     * As we don't want to impact performances too much, we only sample a given
-     * ratio of calls. Based on the <code>sampleRate</code> property, we decide
-     * if we wnat to sample this call.
-     *
-     * @return <code>true</code> if we should sample this call
-     */
-    private boolean sample() {
-        return RNG.nextDouble() <= sampleRate;
     }
 
 }

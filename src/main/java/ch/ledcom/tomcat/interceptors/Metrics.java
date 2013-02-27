@@ -18,6 +18,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.util.Locale;
+import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -29,6 +30,8 @@ import java.util.logging.Logger;
 public class Metrics {
     /** Standard logger. */
     private static final Logger LOG = Logger.getLogger(Metrics.class.getName());
+    /** Random number generator used to decide if we sample a specific call. */
+    static final Random RNG = new Random();
 
     /** Size of send buffer. */
     private static final int BUFFER_SIZE = 1500;
@@ -91,6 +94,9 @@ public class Metrics {
      *            actual {@link String} to send
      */
     private synchronized void doSend(final String stat) {
+        // TODO: This code is take directly from the Statsd example. In this
+        // case, it could be greatly simplified and synchronization should be
+        // reduced.
         try {
             final byte[] data = stat.getBytes("utf-8");
 
@@ -122,6 +128,9 @@ public class Metrics {
      * @return if flush actually happens
      */
     private synchronized boolean flush() {
+        // TODO: This code is take directly from the Statsd example. In this
+        // case, it could be greatly simplified and synchronization should be
+        // reduced.
         try {
             final int sizeOfBuffer = sendBuffer.position();
 
@@ -153,6 +162,19 @@ public class Metrics {
                     address.getPort()), e);
             return false;
         }
+    }
+
+    /**
+     * Check if we should sample a specific method call.
+     *
+     * As we don't want to impact performances too much, we only sample a given
+     * ratio of calls. Based on the <code>sampleRate</code> property, we decide
+     * if we wnat to sample this call.
+     *
+     * @return <code>true</code> if we should sample this call
+     */
+    public final boolean sample() {
+        return RNG.nextDouble() <= sampleRate;
     }
 
 }
