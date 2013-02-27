@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<pmd version="4.3" timestamp="2013-02-27T21:02:02.105">
+<pmd version="4.3" timestamp="2013-02-27T22:23:48.176">
 <file name="/scratch/jenkins/workspace/tomcat-jdbc-interceptors/src/main/java/ch/ledcom/tomcat/interceptors/StatsdInterceptor.java">
-<violation beginline="123" endline="125" begincolumn="26" endcolumn="13" rule="EmptyIfStmt" ruleset="Basic Rules" package="ch.ledcom.tomcat.interceptors" class="StatsdInterceptor" method="invoke" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyIfStmt" priority="3">
+<violation beginline="136" endline="138" begincolumn="26" endcolumn="13" rule="EmptyIfStmt" ruleset="Basic Rules" package="ch.ledcom.tomcat.interceptors" class="StatsdInterceptor" method="invoke" externalInfoUrl="http://pmd.sourceforge.net/rules/basic.html#EmptyIfStmt" priority="3">
 Avoid empty if statements
 </violation>
 </file>

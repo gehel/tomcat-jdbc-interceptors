@@ -147,8 +147,8 @@
 <a class="jxr_linenumber" name="137" href="#137">137</a>         statsdThread.join();
 <a class="jxr_linenumber" name="138" href="#138">138</a>     }
 <a class="jxr_linenumber" name="139" href="#139">139</a> 
-<a class="jxr_linenumber" name="140" href="#140">140</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> waitForPackets(<strong class="jxr_keyword">int</strong> numberOfPackets, <strong class="jxr_keyword">long</strong> timeoutInMillis)
-<a class="jxr_linenumber" name="141" href="#141">141</a>             <strong class="jxr_keyword">throws</strong> InterruptedException {
+<a class="jxr_linenumber" name="140" href="#140">140</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> waitForPackets(<strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> numberOfPackets,
+<a class="jxr_linenumber" name="141" href="#141">141</a>             <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">long</strong> timeoutInMillis) <strong class="jxr_keyword">throws</strong> InterruptedException {
 <a class="jxr_linenumber" name="142" href="#142">142</a>         <strong class="jxr_keyword">long</strong> start = System.currentTimeMillis();
 <a class="jxr_linenumber" name="143" href="#143">143</a>         <strong class="jxr_keyword">while</strong> (receivedMessages.size() &lt; numberOfPackets) {
 <a class="jxr_linenumber" name="144" href="#144">144</a>             <strong class="jxr_keyword">synchronized</strong> (packetReceived) {
