@@ -35,7 +35,7 @@ import org.junit.Test;
 
 public class StatsdInterceptorTest {
 
-    private static final int EXPECTED_NUMBER_OF_PACKETS = 8;
+    private static final int EXPECTED_NUMBER_OF_PACKETS = 3;
     private static final int TIME_TO_WAIT_FOR_PACKETS = 10 * 1000;
     private static final int SOCKET_TIMEOUT = 500;
     private static final int RECEIVE_BUFFER_SIZE = 1024;
@@ -104,6 +104,7 @@ public class StatsdInterceptorTest {
         Statement stmt = conn.createStatement();
         stmt.execute("Create table toto (a Integer)");
         stmt.close();
+        conn.commit();
         conn.close();
 
         // give time to the packet to be received
@@ -117,10 +118,12 @@ public class StatsdInterceptorTest {
                 statsdExceptions.size() == 0);
         assertEquals("Not enough packets were received by mock Statsd.",
                 EXPECTED_NUMBER_OF_PACKETS, receivedMessages.size());
-        assertEquals("jdbc.pool.connection.createStatement.count:1|c|@1.000000",
-                receivedMessages.get(0));
-        assertEquals("jdbc.pool.statement.execute.count:1|c|@1.000000",
-                receivedMessages.get(2));
+        assertTrue(receivedMessages.get(0).startsWith(
+                "jdbc.pool.connection.createStatement.timing:"));
+        assertTrue(receivedMessages.get(1).startsWith(
+                "jdbc.pool.statement.execute.timing"));
+        assertTrue(receivedMessages.get(2).startsWith(
+                "jdbc.pool.connection.commit.timing:"));
     }
 
     @After

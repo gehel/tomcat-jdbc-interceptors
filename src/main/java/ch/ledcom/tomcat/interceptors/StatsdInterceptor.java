@@ -18,8 +18,11 @@ import java.lang.reflect.Method;
 import java.sql.CallableStatement;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 import org.apache.tomcat.jdbc.pool.ConnectionPool;
 import org.apache.tomcat.jdbc.pool.JdbcInterceptor;
@@ -30,6 +33,9 @@ import org.apache.tomcat.jdbc.pool.PooledConnection;
 public class StatsdInterceptor extends JdbcInterceptor {
 
     private static final Random RNG = new Random();
+    private static final Set<String> METHODS_TO_REPORT = new HashSet<String>(
+            Arrays.asList("commit", "createStatement", "getMetadata",
+                    "prepareCall", "prepareStatement", "rollback"));
     private Metrics metrics;
 
     private ProxyFactory proxyFactory;
@@ -109,7 +115,7 @@ public class StatsdInterceptor extends JdbcInterceptor {
         String methodName = method.getName();
         boolean sample = sample();
         long start = 0;
-        if (sample) {
+        if (sample && shouldReport(methodName)) {
             start = System.nanoTime();
         }
         try {
@@ -127,11 +133,15 @@ public class StatsdInterceptor extends JdbcInterceptor {
         } catch (InvocationTargetException e) {
             throw e.getCause();
         } finally {
-            if (sample) {
+            if (sample && shouldReport(methodName)) {
                 metrics.timing(".connection." + methodName + ".timing",
                         System.nanoTime() - start);
             }
         }
+    }
+
+    private boolean shouldReport(String methodName) {
+        return METHODS_TO_REPORT.contains(methodName);
     }
 
     private boolean sample() {

@@ -17,8 +17,14 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Statement;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public class StatementInvocationHandler implements InvocationHandler {
+    private static final Set<String> METHODS_TO_REPORT = new HashSet<String>(
+            Arrays.asList("execute", "executeBatch", "executeQuery",
+                    "executeUpdate"));
 
     private final Statement statement;
     private final Metrics metrics;
@@ -32,15 +38,25 @@ public class StatementInvocationHandler implements InvocationHandler {
     public Object invoke(Object proxy, Method method, Object[] args)
             throws Throwable {
 
-        long start = System.nanoTime();
         String methodName = method.getName();
+        long start = 0;
+        if (shouldReport(methodName)) {
+            start = System.nanoTime();
+        }
         try {
             return method.invoke(statement, args);
         } catch (InvocationTargetException e) {
             throw e.getCause();
         } finally {
-            metrics.timing(".statement." + methodName + ".timing",
-                    System.nanoTime() - start);
+            if (shouldReport(methodName)) {
+                metrics.timing(".statement." + methodName + ".timing",
+                        System.nanoTime() - start);
+            }
         }
     }
+
+    private boolean shouldReport(String methodName) {
+        return METHODS_TO_REPORT.contains(methodName);
+    }
+
 }

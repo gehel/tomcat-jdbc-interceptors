@@ -45,11 +45,6 @@ public class Metrics {
         this.sampleRate = sampleRate;
     }
 
-    public boolean increment(final String key) {
-        return doSend(String.format(Locale.ENGLISH, "%s:1|c|@%f", prefix + key,
-                sampleRate));
-    }
-
     public boolean timing(final String key, final long value) {
         return doSend(String.format(Locale.ENGLISH, "%s:%d|ms|@%f", prefix
                 + key, value, sampleRate));
